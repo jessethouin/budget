@@ -33,9 +33,12 @@ function calculateRecurringTransactionsForDate() {
 
     for (let i = 0; i < rx.length; i++) {
       if (matchFreq(rx[i][4], budgetDates[j][0], rx[i][0])) {
-        let curr = rx[i][2], amt = rx[i][3];
+        let curr = rx[i][2], amt = rx[i][3], acct = rx[i][5], asterisks = "";
         result += amt * currencies[curr];
-        comment += `${rx[i][1]}, ${currencyFormat(amt)} ${curr}\n`;
+        if (acct == "RBC") {
+          asterisks = "**";
+        }
+        comment += `${rx[i][1]}${asterisks}, ${currencyFormat(amt)} ${curr}\n`;
       }
     }
     
@@ -88,6 +91,9 @@ function matchFreq (freq, dt, recDt) {
     case "Monthly":
       return dt.getDate() == recDt.getDate(); // The days of the month match
       break;
+    case "Biweekly after 15":
+      return dt.getDate() > 12 && dt.getDate() < 27 && subtractDays(dt, recDt) % 14 == 0; // The date is greater than the 12th and less than the 27th (this accounts for the 15th falling on a Sat or Sun) and the number of days between the two dates being compared is evenly divided by 14
+      break;
     case "Bimonthly":
       return dt.getDate() == recDt.getDate() && (dt.getMonth() - recDt.getMonth()) % 2 == 0; // The days of the month match and the months are of the same parity
       break;
@@ -132,18 +138,6 @@ function getValuesOrFormulas(range) {
   return matrix;
 };
 
-function doFxApi() {
-  const baseCurrency = ss.getRange("BaseCurrency").getValue();
-  const currenciesRange = ss.getRangeByName("Currencies");
-  const currencies = currenciesRange.getValues();
-  
-  for (const i = 0; i < currencies.length; i++) {
-    // check usage https://free.currconv.com/others/usage?apiKey=currconvAPIKey
-    const rate = ImportJSON(`https://free.currconv.com/api/v7/convert?q=${currencies[i][0]}_${baseCurrency}&compact=ultra&apiKey=${currconvAPIKey}`, `/${currencies[i][0]}_${baseCurrency}`, ""); // 100 requests per hour, no limites on base currency
-    currenciesRange.getCell(i + 1, 2).setValue(rate[1]); // How many base currencies does it cost to buy this currency?
-  }
-};
-
 /**
 * I can't believe this isn't a standard Javascript library
 *
@@ -159,15 +153,4 @@ function subtractDays(dt1, dt2) {
 
 function trimArray(ary) {
   return ary.filter(a => a[0] != "");
-};
-
-
-/** TESTS **/
-
-
-function testFxApi() {
-  const fixer = ImportJSON(`http://data.fixer.io/api/latest?access_key=${fixerAPIKey}&symbols=USD,CAD`, "/rates/USD,/rates/CAD", "noHeaders");
-  Logger.log("fixer API: " + fixer);
-  const currconv = ImportJSON(`https://free.currconv.com/api/v7/convert?q=USD_CAD&compact=ultra&apiKey=${currconvAPIKey}`, "/USD_CAD", "");
-  Logger.log("currconv API: " + currconv[1]);
 };
