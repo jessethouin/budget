@@ -1,5 +1,3 @@
-const currconvAPIKey = "d06a1b6240c9e865a3ba";
-const fixerAPIKey = "78ec43daf1bc90999572f8354e1071b5";
 const ss = SpreadsheetApp.getActiveSpreadsheet();
 const currencies = trimArray(ss.getRangeByName("Currencies").getValues()).reduce((ary, tfx) => ( { ...ary, [tfx[0]]: tfx[1] }), {});
 
@@ -35,7 +33,7 @@ function calculateRecurringTransactionsForDate() {
       if (matchFreq(rx[i][4], budgetDates[j][0], rx[i][0])) {
         let curr = rx[i][2], amt = rx[i][3], acct = rx[i][5], asterisks = "";
         result += amt * currencies[curr];
-        if (acct == "RBC") {
+        if (acct == "RBC" || acct == "CIBC") {
           asterisks = "**";
         }
         comment += `${rx[i][1]}${asterisks}, ${currencyFormat(amt)} ${curr}\n`;
@@ -92,7 +90,7 @@ function matchFreq (freq, dt, recDt) {
       return dt.getDate() == recDt.getDate(); // The days of the month match
       break;
     case "Biweekly after 15":
-      return dt.getDate() > 12 && dt.getDate() < 27 && subtractDays(dt, recDt) % 14 == 0; // The date is greater than the 12th and less than the 27th (this accounts for the 15th falling on a Sat or Sun) and the number of days between the two dates being compared is evenly divided by 14
+      return dt.getDate() > 13 && dt.getDate() < 28 && subtractDays(dt, recDt) % 14 == 0; // The date is greater than the 13th and less than the 28th (this accounts for the 15th falling on a Sat) and the number of days between the two dates being compared is evenly divided by 14
       break;
     case "Bimonthly":
       return dt.getDate() == recDt.getDate() && (dt.getMonth() - recDt.getMonth()) % 2 == 0; // The days of the month match and the months are of the same parity
