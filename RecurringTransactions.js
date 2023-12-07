@@ -31,7 +31,6 @@ function calculateRecurringTransactionsForDate() {
 
     for (let i = 0; i < rx.length; i++) {
       if ((budgetDates[j][0] < rx[i][6] || rx[i][6] == "") && matchFreq(rx[i][4], budgetDates[j][0], rx[i][0])) {
-      // if (matchFreq(rx[i][4], budgetDates[j][0], rx[i][0])) {
         let curr = rx[i][2], amt = rx[i][3], acct = rx[i][5], asterisks = "";
         result += amt * currencies[curr];
         if (acct == "RBC" || acct == "CIBC") {
