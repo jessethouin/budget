@@ -30,7 +30,8 @@ function calculateRecurringTransactionsForDate() {
     let comment = "";
 
     for (let i = 0; i < rx.length; i++) {
-      if (matchFreq(rx[i][4], budgetDates[j][0], rx[i][0])) {
+      if ((budgetDates[j][0] < rx[i][6] || rx[i][6] == "") && matchFreq(rx[i][4], budgetDates[j][0], rx[i][0])) {
+      // if (matchFreq(rx[i][4], budgetDates[j][0], rx[i][0])) {
         let curr = rx[i][2], amt = rx[i][3], acct = rx[i][5], asterisks = "";
         result += amt * currencies[curr];
         if (acct == "RBC" || acct == "CIBC") {
@@ -75,7 +76,7 @@ function sortRecurringTransactions() {
 
 function matchFreq (freq, dt, recDt) {
   if (dt < recDt) return false; // The recurrence hasn't started yet
-  
+
   switch(freq) {
     case "Once":
       return dt.getTime() === recDt.getTime(); // Days match exactly
@@ -87,7 +88,7 @@ function matchFreq (freq, dt, recDt) {
       return subtractDays(dt, recDt) % 14 == 0; // The number of days between the two dates being compared is evenly divided by 14
       break;
     case "Monthly":
-      return dt.getDate() == recDt.getDate(); // The days of the month match
+      return (isLastDayOfMonth(dt) && isAfterLastDay(dt, recDt)) || dt.getDate() == recDt.getDate(); // If the recurring transaction date is after the last day of the current month, we consider the dates to be matching OR The days of the month match
       break;
     case "Biweekly after 15":
       return dt.getDate() > 13 && dt.getDate() < 28 && subtractDays(dt, recDt) % 14 == 0; // The date is greater than the 13th and less than the 28th (this accounts for the 15th falling on a Sat) and the number of days between the two dates being compared is evenly divided by 14
@@ -111,7 +112,6 @@ function matchFreq (freq, dt, recDt) {
       return false;
   }
 };
-
 
 /** UTILS **/
 
@@ -147,6 +147,32 @@ function getValuesOrFormulas(range) {
 
 function subtractDays(dt1, dt2) {
   return Math.round((dt1.getTime()-dt2.getTime())/(24*3600*1000)); 
+};
+
+function getLastDayOfMonth(dt) {
+  return new Date(dt.getFullYear(), dt.getMonth() + 1, 0).getDate();
+};
+
+function isLastDayOfMonth(dt) {
+  let d = new Date(dt.getFullYear(), dt.getMonth() + 1, 0);
+  return d.getDate() == dt.getDate();
+};
+
+function isAfterLastDay(dt, recDt) {
+  if (!isLeapYear(dt.getFullYear()) && dt.getMonth() == 1 && recDt.getDate() > 28) {
+    return true;
+  }
+  if (isLeapYear(dt.getFullYear()) && dt.getMonth() == 1 && recDt.getDate() > 29) {
+    return true;
+  }
+  if ((dt.getMonth() == 3 || dt.getMonth() == 5 || dt.getMonth() == 8 || dt.getMonth() == 10) && recDt.getDate() > 30) {
+    return true;
+  }
+  return false;
+};
+
+function isLeapYear(year) {
+  return ((year % 4 == 0) && (year % 100 != 0)) || (year % 400 == 0);
 };
 
 function trimArray(ary) {
